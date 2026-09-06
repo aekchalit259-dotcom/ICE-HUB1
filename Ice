@@ -1,0 +1,304 @@
+-- [[ MM2 Ultimate Script - AEK Edition ]] --
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- สร้างหน้าต่างหลัก (โทนสีดำ-เขียว)
+local Window = Rayfield:CreateWindow({
+   Name = "MM2 สคริปต์ระดับสูง ⭐️",
+   LoadingTitle = "กำลังโหลดระบบ...",
+   LoadingSubtitle = "โดย AI GIMINI",
+   ConfigurationSaving = {
+      Enabled = false,
+   },
+   Discord = {
+      Enabled = false
+   },
+   KeySystem = false,
+   Theme = "Green" -- ปรับธีมเป็นโทนสีเขียว-ดำ
+})
+
+-- ปรับแต่งปุ่มเปิด-ปิดเมนู (Toggle Button)
+Rayfield:SetFolder("MM2_AEK_Config")
+if game:GetService("CoreGui"):FindFirstChild("Rayfield") then
+    -- สร้างปุ่ม floating รูปวงกลมพร้อมดาวเพื่อเปิด/ปิด GUI
+    local OpenBtn = Instance.new("ScreenGui")
+    local MainBtn = Instance.new("TextButton")
+    local UICorner = Instance.new("UICorner")
+
+    OpenBtn.Name = "MM2_OpenButton"
+    OpenBtn.Parent = game:GetService("CoreGui")
+
+    MainBtn.Name = "ToggleMenu"
+    MainBtn.Parent = OpenBtn
+    MainBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    MainBtn.BorderColor3 = Color3.fromRGB(0, 255, 100)
+    MainBtn.Position = UDim2.new(0.02, 0, 0.4, 0)
+    MainBtn.Size = UDim2.new(0, 50, 0, 50)
+    MainBtn.Font = Enum.Font.SourceSansBold
+    MainBtn.Text = "⭐️"
+    MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MainBtn.TextSize = 25.000
+    MainBtn.Active = true
+    MainBtn.Draggable = true
+
+    UICorner.CornerRadius = UDim.new(1, 0) -- ทำเป็นวงกลม
+    UICorner.Parent = MainBtn
+
+    MainBtn.MouseButton1Click:Connect(function()
+        Rayfield:Toggle()
+    end)
+end
+
+-- สร้างแท็บเมนูต่างๆ
+local TabVisuals = Window:CreateTab("ระบบการมองเห็น 👁️")
+local TabCombat = Window:CreateTab("ระบบต่อสู้ ⚔️")
+local TabFarming = Window:CreateTab("ระบบฟาร์ม 🪙")
+local TabMovement = Window:CreateTab("ระบบเคลื่อนที่ 🏃")
+
+----------------------------------------------------------------
+-- 1. มองทะลุแยกบทบาท (ESP) 👀
+----------------------------------------------------------------
+local ESP_Enabled = false
+
+local function CreateESP(player)
+    if player == game.Players.LocalPlayer then return end
+    
+    local Highlight = Instance.new("Highlight")
+    Highlight.Name = "MM2_ESP"
+    Highlight.Parent = player.Character or player.CharacterAdded:Wait()
+    Highlight.FillTransparency = 0.5
+    Highlight.OutlineTransparency = 0
+    
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Name = "MM2_ESP_Tag"
+    Billboard.Size = UDim2.new(0, 100, 0, 50)
+    Billboard.StudsOffset = Vector3.new(0, 3, 0)
+    Billboard.AlwaysOnTop = true
+    Billboard.Parent = player.Character or player.CharacterAdded:Wait()
+    
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.TextScaled = true
+    TextLabel.Font = Enum.Font.SourceSansBold
+    TextLabel.Parent = Billboard
+
+    task.spawn(function()
+        while ESP_Enabled and player.Parent do
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local isMurder = player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife")
+                local isSheriff = player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun")
+                
+                if isMurder then
+                    Highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                    TextLabel.Text = "คนไม่ดี 🔴"
+                elseif isSheriff then
+                    Highlight.FillColor = Color3.fromRGB(0, 150, 255)
+                    TextLabel.Text = "ฮีโร่ 🔵"
+                else
+                    Highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                    TextLabel.Text = "คนดี 🟢"
+                end
+            end
+            task.wait(1)
+        end
+        Highlight:Destroy()
+        Billboard:Destroy()
+    end)
+end
+
+TabVisuals:CreateToggle({
+   Name = "มองทะลุแยกบทบาท (ESP) 👀",
+   CurrentValue = false,
+   Callback = function(Value)
+      ESP_Enabled = Value
+      if ESP_Enabled then
+         for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= game.Players.LocalPlayer then
+               CreateESP(player)
+            end
+         end
+      end
+   end,
+})
+
+----------------------------------------------------------------
+-- 2. เล็งเป้า Murder ออโต้ (Aimbot) 🎯
+----------------------------------------------------------------
+local Aimbot_Enabled = false
+
+TabCombat:CreateToggle({
+   Name = "เล็งเป้า Murder ออโต้ (Aimbot) 🎯",
+   CurrentValue = false,
+   Callback = function(Value)
+      Aimbot_Enabled = Value
+      task.spawn(function()
+         while Aimbot_Enabled do
+            for _, player in pairs(game.Players:GetPlayers()) do
+               if player ~= game.Players.LocalPlayer and (player.Backpack:FindFirstChild("Knife") or (player.Character and player.Character:FindFirstChild("Knife"))) then
+                  if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                     workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, player.Character.HumanoidRootPart.Position)
+                  end
+               end
+            end
+            task.wait()
+         end
+      end)
+   end,
+})
+
+----------------------------------------------------------------
+-- 3. ฆ่าทุกคนในแมพ 💀
+----------------------------------------------------------------
+TabCombat:CreateButton({
+   Name = "ฆ่าทุกคนในแมพ 💀",
+   Callback = function()
+      local localPlayer = game.Players.LocalPlayer
+      local knife = localPlayer.Backpack:FindFirstChild("Knife") or (localPlayer.Character and localPlayer.Character:FindFirstChild("Knife"))
+      
+      if knife then
+         if knife.Parent == localPlayer.Backpack then
+            knife.Parent = localPlayer.Character
+         end
+         for _, target in pairs(game.Players:GetPlayers()) do
+            if target ~= localPlayer and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+               firetouchinterest(knife.Handle, target.Character.HumanoidRootPart, 0)
+               firetouchinterest(knife.Handle, target.Character.HumanoidRootPart, 1)
+            end
+         end
+      end
+   end,
+})
+
+----------------------------------------------------------------
+-- 4. ขยายการโจมตี (Hitbox)
+----------------------------------------------------------------
+local Hitbox_Enabled = false
+local HitboxSize = 10
+
+TabCombat:CreateToggle({
+   Name = "ขยายการโจมตี (Hitbox) 🗡️",
+   CurrentValue = false,
+   Callback = function(Value)
+      Hitbox_Enabled = Value
+      task.spawn(function()
+         while Hitbox_Enabled do
+            for _, player in pairs(game.Players:GetPlayers()) do
+               if player ~= game.Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                  player.Character.HumanoidRootPart.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                  player.Character.HumanoidRootPart.Transparency = 0.7
+                  player.Character.HumanoidRootPart.BrickColor = BrickColor.new("Really red")
+                  player.Character.HumanoidRootPart.CanCollide = false
+               end
+            end
+            task.wait(1)
+         end
+      end)
+   end,
+})
+
+----------------------------------------------------------------
+-- 5. เก็บปืนออโต้ (Auto Gun) 🔫
+----------------------------------------------------------------
+TabCombat:CreateButton({
+   Name = "เก็บปืนออโต้ (Auto Gun) 🔫",
+   Callback = function()
+      local gunDrop = workspace:FindFirstChild("GunDrop", true)
+      if gunDrop and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = gunDrop.CFrame
+      end
+   end,
+})
+
+----------------------------------------------------------------
+-- 6. ฟาร์มเหรียญออโต้ (Auto Farm Coin) 🪙💰
+----------------------------------------------------------------
+local AutoFarm_Enabled = false
+
+TabFarming:CreateToggle({
+   Name = "ฟาร์มเหรียญออโต้ (Auto Farm Coin) 🪙💰",
+   CurrentValue = false,
+   Callback = function(Value)
+      AutoFarm_Enabled = Value
+      task.spawn(function()
+         while AutoFarm_Enabled do
+            local coinContainer = workspace:FindFirstChild("CoinContainer", true) or workspace:FindFirstChild("CoinServer", true)
+            if coinContainer then
+               for _, coin in pairs(coinContainer:GetChildren()) do
+                  if AutoFarm_Enabled and coin:IsA("BasePart") and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
+                     task.wait(0.3)
+                  end
+               end
+            end
+            task.wait()
+         end
+      end)
+   end,
+})
+
+----------------------------------------------------------------
+-- 7. ระบบเคลื่อนที่ (Speed, Jump, Noclip) 🏃
+----------------------------------------------------------------
+local Speed_Enabled = false
+local Jump_Enabled = false
+local Noclip_Enabled = false
+
+TabMovement:CreateToggle({
+   Name = "โหมดวิ่งไว (Speed Run) 🏃",
+   CurrentValue = false,
+   Callback = function(Value)
+      Speed_Enabled = Value
+      task.spawn(function()
+         while Speed_Enabled do
+            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+               game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 50
+            end
+            task.wait()
+         end
+         if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+         end
+      end)
+   end,
+})
+
+TabMovement:CreateToggle({
+   Name = "เปิดโหมดกระโดดสูง (High Jump) 🛑",
+   CurrentValue = false,
+   Callback = function(Value)
+      Jump_Enabled = Value
+      task.spawn(function()
+         while Jump_Enabled do
+            if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+               game.Players.LocalPlayer.Character.Humanoid.JumpPower = 100
+            end
+            task.wait()
+         end
+         if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+            game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+         end
+      end)
+   end,
+})
+
+TabMovement:CreateToggle({
+   Name = "เดินทะลุกำแพง (Noclip) 🚪",
+   CurrentValue = false,
+   Callback = function(Value)
+      Noclip_Enabled = Value
+      task.spawn(function()
+         while Noclip_Enabled do
+            if game.Players.LocalPlayer.Character then
+               for _, part in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
+                  if part:IsA("BasePart") then
+                     part.CanCollide = false
+                  end
+               end
+            end
+            task.wait()
+         end
+      end)
+   end,
+})
